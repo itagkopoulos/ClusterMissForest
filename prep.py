@@ -1,11 +1,17 @@
-# preprecess.py
+# prep.py
 
 from collections import defaultdict
 import os
 import csv
 import math
 import copy
+import pickle
 import numpy as np 
+
+def mkdir_p(dir):
+    # make a directory (dir) if it doesn't exist
+    if not os.path.exists(dir):
+        os.mkdir(dir)
 
 def read_csv(file):
 	if not os.path.exists(file):
@@ -26,7 +32,7 @@ def read_csv(file):
 
 		return data
 
-def fit_transform(xmis, nan=None):
+def dump_transform(xmis, nan=None):
 	# Input
 	#   xmis: missing-valued matrix
 	# 	nan : string indicating NaN in the given xmis, defualt as float("nan")
@@ -87,10 +93,13 @@ def fit_transform(xmis, nan=None):
 		misi.append(var_misi)
 		obsi.append(var_obsi)
 	vari = np.argsort(misn).tolist()
-	print(misn)
-	return xobs, vari, misi, obsi
+
+	preprocess_dir = "%s/.prep" % os.getcwd()
+	mkdir_p(preprocess_dir)
+	fileholder =  open(preprocess_dir + "/prep.txt", "wb")
+	pickle.dump([xobs, vari, misi, obsi], fileholder)
 
 # if __name__ == "__main__":
 # 	file = "data0.0_50.csv"
 # 	xmis = read_csv(file)
-# 	xobs, vari, misi, obsi = fit_transform(xmis)
+# 	dump_transform(xmis)
