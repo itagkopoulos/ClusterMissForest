@@ -58,7 +58,7 @@ class RandomForestImputation(object):
             self.random_state, 
             self.verbose, 
             self.warm_start)'''
-            regr = RandomForestRegressor()
+            regr = RandomForestRegressor(n_estimators = 100, verbose=1, n_jobs = -1)
             regr.fit(X_train, y)
             imp = regr.predict(X_test)
             self.done = True
@@ -75,9 +75,6 @@ if __name__ == "__main__":
     data_file = sys.argv[1]
     res_file = sys.argv[2]
     
-    print(res_file)
-    print(data_file)
-    
     with open(data_file, "rb") as tmp:
         X = pickle.load(tmp)
     with open(res_file, "rb") as tmp:
@@ -90,14 +87,10 @@ if __name__ == "__main__":
     #      sklearn parameter files
 
     X_array = np.array(X)
-    print(X_array)
     _, p = np.shape(X_array)
 
     p_train = np.delete(np.arange(p), vari)
-    print(vari)
-    print(len(misi))
-    print(len(obsi))
-    
+    print(p_train)
     
     X_train = X_array[obsi, :]
     X_train = X_train[:, p_train]
@@ -114,6 +107,7 @@ if __name__ == "__main__":
     res_obj.imp = imp
     res_obj.done = rf.done
     res_obj.err = rf.err
+    
     
     with open(res_file, "wb") as tmp:
         pickle.dump(res_obj, tmp)
