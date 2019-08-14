@@ -1,5 +1,5 @@
-#Missing Value Imputation Class
-#Each feature should be separated for parallel design
+# Missing Value Imputation Class
+# Each feature should be separated for parallel design
 from enum import Enum
 
 
@@ -26,7 +26,7 @@ class MissForestImputationParameters:
         self.initial_guess_mode = InitialGuessOptions.AVERAGE.value
         self.parallel_options = ParallelOptions.SLURM.value
         self.max_iter = 10
-        self.num_node = 4
+        self.num_node = 2
         self.num_core_local = 12
         self.slurm_parameters = SlurmImputationParameters()
         
@@ -55,7 +55,7 @@ class SlurmImputationParameters:
         self.shell_script_path = 'job.sh'
         
     def get_command_shell(self, x_path, result_path):
-        python_path = 'python'
+        python_path = 'python3'
         exe_path = 'srun'
 
         script_path = self.script_path
@@ -63,7 +63,7 @@ class SlurmImputationParameters:
         result_path = result_path
         
         return ([exe_path, python_path, script_path, x_path, result_path])
-    
+
     def get_command(self, varidx):
         exe_path = 'sbatch'
         
@@ -116,7 +116,7 @@ class MissForestImputation:
     def miss_forest_imputation(self, matrix_for_impute):
         self.matrix_for_impute = matrix_for_impute
         self.initial_guess() #Prep
-
+        
         if self.parameters.parallel_options == ParallelOptions.SLURM.value:
             self.miss_forest_imputation_SLURM()
             
@@ -135,6 +135,9 @@ class MissForestImputation:
         
             for i in range(len(vari_node)):
                 cur_X = self.cur_iter_matrix
+                if math.isnan(np.sum(cur_X)):
+                    raise Exception('NAN!')
+                
                 
                 x_path = self.parameters.tmp_X_file
                 
@@ -158,9 +161,11 @@ class MissForestImputation:
                     command_shell =' '.join(command_shell)
                     with open(self.parameters.slurm_parameters.shell_script_path,'w') as tmp:
                         tmp.writelines('#!/bin/bash\n')
+                        print(command_shell)
                         tmp.writelines(command_shell)
                     
                     command = self.parameters.slurm_parameters.get_command(cur_vari)
+                    print(command)
                     subprocess.call(command)
                 
                 
@@ -194,29 +199,9 @@ class MissForestImputation:
                     result_path = self.parameters.get_results_varidx_file(cur_vari)
                     cur_result = pickle.load(open(result_path,"rb"))
                     cur_misi = cur_result.misi
-                    cur_obsi = cur_result.obsi
-                    
-                    '''from sklearn.ensemble import RandomForestRegressor
-                    regr = RandomForestRegressor(n_estimators = 100)
-                    p_train = np.delete(np.arange(len(self.vari)), cur_vari)
-                    tmp_X = cur_X[cur_obsi,:]
-                    tmp_X = tmp_X[:,p_train]
-                    
-                    regr.fit(tmp_X, cur_X[cur_obsi,cur_vari])
-                    
-                    tmp_X = cur_X[cur_misi,:]
-                    tmp_X = tmp_X[:,p_train]
-                    
-                    imp = regr.predict(tmp_X)
-                    
-                    print(imp)
-                    print(cur_result.imp)'''
-                    
                     
                     self.cur_iter_matrix[cur_misi,cur_result.vari] = cur_result.imp
-                    
-                    
-            #raise Exception('!!!')    
+                
             if self.check_converge() == True:
                 self.result_matrix = self.previous_iter_matrix
                 return
@@ -231,6 +216,8 @@ class MissForestImputation:
         cur_idx = 0
         cur_vari = []
         
+        print(self.vari)
+        print(self.parameters.num_node)
         for i in range(len(self.vari)):
             
             if cur_idx == self.parameters.num_node:
@@ -245,45 +232,28 @@ class MissForestImputation:
                     vari_node.append(cur_vari)
                 
             cur_idx = cur_idx + 1
-        print(vari_node) 
+        
+        print(vari_node)
+            
         return vari_node
 
     def check_converge(self):
         diff_A = 0
         diff_B = 0
-        '''
         for i in range(len(self.vari)):
             cur_vari = self.vari[i]
             result_path = self.parameters.get_results_varidx_file(cur_vari)
             cur_result = pickle.load(open(result_path,"rb"))
-            cur_misi = cur_result.misi
+            cur_misi = cur_result.obsi
 
             old_val = self.previous_iter_matrix[cur_misi,cur_result.vari]
             new_val = self.cur_iter_matrix[cur_misi,cur_result.vari]
             
-            if cur_vari == 1:
-                print('==============')
-                print(cur_misi)
-                print(cur_vari)
-                print(old_val)
-                print(new_val)
-                print('===============')
-            
+            print(old_val)
+            print(new_val)
             
             diff_A += np.sum((old_val-new_val)**2)
             diff_B += np.sum(new_val**2)
-            
-            print((old_val-new_val)**2)
-            print(new_val**2)
-        '''
-        diff_A = np.sum((self.previous_iter_matrix - self.cur_iter_matrix)**2)
-        diff_B = np.sum((self.cur_iter_matrix)**2)
-        
-        print(self.previous_iter_matrix)
-        print(self.cur_iter_matrix)
-        
-        print(diff_A)
-        print(diff_B)
 
         cur_diff = diff_A/diff_B
         print(self.previous_diff)
