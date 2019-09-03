@@ -50,7 +50,7 @@ if __name__ == "__main__":
         y_train = y_train[:, vari]
 
         start = time()
-        rf = arg_obj.rf
+        rf = arg_obj.rf_obj
         imp = rf.fit_predict(X_train, y_train, X_test)
         duration_rf = time() - start
         
