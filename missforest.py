@@ -1,15 +1,17 @@
+from mf_local import MissForestImputationLocal
+from mf_slurm import MissForestImputationSlurm
+from time import time
 import os, shutil
 import numpy as np
-import rfimpute
-from time import time
 
 InitImpOptions = ['mean', 'zero', 'knn']
 ParallelOptions = ['slurm', 'local']
 
 class MissForest:
 
-    def __init__(self, max_iter=10, init_imp='mean', parallel='local', n_nodes=1, 
-                 n_cores=1, n_features=1, memory=None):
+    def __init__(self, max_iter=10, init_imp='mean', parallel='local',
+                 n_nodes=1, n_cores=-1, n_features=1, memory=None,
+                 time='1:00:00'):
         self.max_iter = max_iter
         self.init_imp = init_imp
         self.parallel = parallel 
@@ -17,6 +19,7 @@ class MissForest:
         self.n_cores = n_cores 
         self.n_features = n_features
         self.memory = memory
+        self.time = time
 
     def _check_inputs(self, xmis):
         """ private method, validating all inputs """
@@ -25,8 +28,8 @@ class MissForest:
         except:
             raise ValueError("xmis: not a matrix")
 
-        if type(self.n_trees) != int or self.n_trees < 1:
-            raise ValueError("n_trees: not a positive integer")
+        # if type(self.n_trees) != int or self.n_trees < 1:
+            # raise ValueError("n_trees: not a positive integer")
 
         if type(self.max_iter) != int or self.max_iter < 1:
             raise ValueError("max_iter: not a positive integer")
@@ -44,15 +47,15 @@ class MissForest:
 
         if type(self.n_cores) != int or self.n_cores < 1:
             raise ValueError("n_cores: not a positve integer")
-        elif self.n_cores > self.n_trees:
-            pass
+        # elif self.n_cores > self.n_trees:
+            # pass
             # raise ValueError("n_cores: cores should be less than n_trees")
 
         if type(self.n_features) != int or self.n_features < 1:
             raise ValueError("n_features: not a positive integer")
         
         if self.memory is None:
-            self.memory = self.n_cores * 2000
+            self.memory = str(self.n_cores * 2000)
         else: 
             pass
 
@@ -69,18 +72,23 @@ class MissForest:
         self._init_dirs()
         self._check_inputs(xmis)
 
-        n_trees = self.n_trees
+        # n_trees = self.n_trees
         max_iter = self.max_iter
         init_imp = self.init_imp
         parallel = self.parallel 
         n_nodes = self.n_nodes 
         n_cores = self.n_cores 
         n_features = self.n_features
+        memory = self.memory
+        time = self.time
 
-        mf = rfimpute.MissForestImputation(n_trees, max_iter, init_imp, parallel, n_nodes, n_cores, n_features)
-        res = mf.miss_forest_imputation(xmis)
+        if parallel == 'local':
+            mf = MissForestImputationLocal(max_iter, init_imp, n_cores)
+        else:
+            mf = MissForestImputationSlurm(max_iter, init_imp, n_nodes, n_cores, n_features, memory, time)
+        mf.miss_forest_imputation(xmis)
 
-        return res
+        return mf.result_matrix
 
 def rmse(nmis, ximp, xtrue):
     rss = np.sum((xtrue - ximp) ** 2)
@@ -91,14 +99,14 @@ def rmse(nmis, ximp, xtrue):
 if __name__ == "__main__":
 
     print("reading data files ...")
-    # data = np.loadtxt('data/data0.5_50.csv', delimiter = ',')
-    # true_data = np.loadtxt('data/data0.5.csv', delimiter = ',')
-    data = np.loadtxt('data/big_data50.csv', delimiter=',')
-    true_data = np.loadtxt('data/big_data.txt', skiprows=1, usecols=tuple(np.arange(2, 4098)))
+    data = np.loadtxt('data/data0.5_50.csv', delimiter = ',')
+    true_data = np.loadtxt('data/data0.5.csv', delimiter = ',')
+    # data = np.loadtxt('data/big_data50.csv', delimiter=',')
+    # true_data = np.loadtxt('data/big_data.txt', skiprows=1, usecols=tuple(np.arange(2, 4098)))
     nmis = len(np.argwhere(np.isnan(data)))
     n, p = np.shape(data)
-    mf = MissForest(max_iter=10, init_imp='mean', parallel='slurm', n_nodes=1, n_cores=8, n_features=1024, memory=None)
+    mf = MissForest(max_iter=10, init_imp='mean', parallel='local', n_nodes=2, n_cores=8, n_features=8, memory=None, time='1:00:00')
     start = time()
     ximp = mf.fit_transform(data) 
     duration = time() - start
-    rmse = nrmse(nmis, ximp, true_data_)
+    rmse = rmse(nmis, ximp, true_data)
