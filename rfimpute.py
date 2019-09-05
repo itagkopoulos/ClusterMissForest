@@ -22,10 +22,10 @@ class ParallelOptions(Enum):
 
 class MissForestImputation(ABC):
     """ Private object, do not directly use it """
-    def __init__(self, max_iter, init_imp, n_cores):
+    def __init__(self, max_iter, init_imp, vart):
         self.max_iter = max_iter
         self.init_imp = init_imp
-        self.n_cores = n_cores
+        self.vart = vart
         self.initial_guess_matrix = None
         self.vari = None
         self.misi = None
@@ -55,23 +55,15 @@ class MissForestImputation(ABC):
                 return False
                 
     def initial_guess(self):
+
         if self.init_imp == InitialGuessOptions.MEAN.value:
             self.initial_guess_average()
             
     def initial_guess_average(self):
-        # Input
-        #   Xmis: missing-valued matrix
-        #     nan : string indicating NaN in the given Xmis, defualt as float("nan")
-        # Output
-        #     Ximp: raw-imputed matrix
-        #     vari: list of indices sorted by the number of missing values in 
-        #           ascending order
-        #     misi: list of indices of missing values for each variable
-        #      obsi: list of indices of observed values for each variable
         Xmis = self.matrix_for_impute
         Ximp = np.copy(Xmis)
         n, p = np.shape(Xmis)
-        # start initial imputation
+
         misn = [] # number of missing for each variable
         misi = [] # indices of missing samples for each variable
         obsi = [] # indices of observations for each variable

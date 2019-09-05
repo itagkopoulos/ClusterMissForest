@@ -32,6 +32,7 @@ if __name__ == "__main__":
     
     print("Duration of load:", duration_load)
     for i in range(len(arg_obj.vari)):
+        vart = arg_obj.vart
         vari = arg_obj.vari[i]
         misi = arg_obj.misi[i]
         obsi = arg_obj.obsi[i]
@@ -51,7 +52,7 @@ if __name__ == "__main__":
 
         start = time()
         rf = arg_obj.rf_obj
-        imp = rf.fit_predict(X_train, y_train, X_test)
+        imp = rf.fit_predict(X_train, y_train, X_test, vart[i])
         duration_rf = time() - start
         
         X_array[misi,vari] = imp

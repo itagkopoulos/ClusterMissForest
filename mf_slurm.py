@@ -7,8 +7,9 @@ import time
 import numpy as np
 
 class MissForestImputationSlurmArgumentObject:
-    def __init__(self, rf_obj, vari, obsi, misi):
+    def __init__(self, rf_obj, vart, vari, obsi, misi):
         self.rf_obj = rf_obj
+        self.vart = vart
         self.vari = vari
         self.obsi = obsi
         self.misi = misi
@@ -22,16 +23,15 @@ class MissForestImputationSlurmResultObject:
 
 class MissForestImputationSlurm(MissForestImputation):
 
-    def __init__(self, max_iter, init_imp, n_nodes, n_cores, n_features, memory, time):
-        super().__init__(max_iter, init_imp, n_cores)
+    def __init__(self, mf_params, rf_params, n_nodes, n_cores, node_features, memory, time):
+        super().__init__(**mf_params)
+        self.class_weight = rf_params.pop('class_weight')
+        self.params = rf_params
+
         self.n_nodes = n_nodes
-        self.n_cores = n_cores
-        self.n_features = n_features
-        self.memory = memory
-        self.time = time 
+        self.node_features = node_features
 
         self.handler = JobHandler(n_cores, memory, time)
-        self.slurm_instance = None
 
     def miss_forest_imputation(self, matrix_for_impute):
         self.matrix_for_impute = matrix_for_impute
@@ -42,20 +42,18 @@ class MissForestImputationSlurm(MissForestImputation):
         self.cur_iter_matrix = np.copy(self.initial_guess_matrix)
         cur_iter = 1
         
-        rf = RandomForest()
-        
-        for i in range(len(vari_node)):
-            for j in range(len(vari_node[i])):
-                cur_vari = vari_node[i][j]
-                cur_obsi = []
-                cur_misi = []
-                for k in range(len(vari_node[i][j])):
-                    cur_obsi.append(self.obsi[cur_vari[k]])
-                    cur_misi.append(self.misi[cur_vari[k]])
-                argument_path = self.handler.get_arguments_varidx_file(i, j)
-                with open(argument_path, 'wb') as tmp:
-                    argument_object = MissForestImputationSlurmArgumentObject(rf, cur_vari, cur_obsi, cur_misi)
-                    pickle.dump(argument_object, tmp)
+        # for i in range(len(vari_node)):
+        #     for j in range(len(vari_node[i])):
+        #         cur_vari = vari_node[i][j]
+        #         cur_obsi = []
+        #         cur_misi = []
+        #         for k in range(len(vari_node[i][j])):
+        #             cur_obsi.append(self.obsi[cur_vari[k]])
+        #             cur_misi.append(self.misi[cur_vari[k]])
+        #         argument_path = self.handler.get_arguments_varidx_file(i, j)
+        #         with open(argument_path, 'wb') as tmp:
+        #             argument_object = MissForestImputationSlurmArgumentObject(rf, cur_vari, cur_obsi, cur_misi)
+        #             pickle.dump(argument_object, tmp)
         
         while True:
             if cur_iter > self.max_iter:
@@ -79,8 +77,11 @@ class MissForestImputationSlurm(MissForestImputation):
 
                     argument_path = self.handler.get_arguments_varidx_file(i, j)
                     result_path = self.handler.get_results_varidx_file(i, j)
+                    rf = RandomForest(self.params, self.class_weight)
+                    with open(argument_path, 'wb') as tmp:
+                        argument_object = MissForestImputationSlurmArgumentObject(rf, self.vart, cur_vari, cur_obsi, cur_misi)
+                        pickle.dump(argument_object, tmp)
                     with open(result_path, 'wb') as tmp:
-                        argument_object = MissForestImputationSlurmArgumentObject(rf, cur_vari, cur_obsi, cur_misi)
                         argument_object.results.done = False
                         pickle.dump(argument_object.results, tmp)
                     
@@ -155,7 +156,7 @@ class MissForestImputationSlurm(MissForestImputation):
         
         for var in self.vari:
             cur_vari.append(var)
-            if len(cur_vari) == self.n_features:
+            if len(cur_vari) == self.node_features:
                 cur_jobs.append(cur_vari)
                 cur_vari = []
                 if len(cur_jobs) == self.n_nodes:
