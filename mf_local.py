@@ -1,4 +1,4 @@
-from rfimpute import MissForestImputation
+from impute import MissForestImputation
 from randomforest import RandomForest
 import numpy as np 
 

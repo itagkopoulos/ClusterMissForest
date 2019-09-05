@@ -15,12 +15,13 @@ class MissForest:
                  max_features='sqrt', max_leaf_nodes=None, 
                  min_impurity_decrease=0.0, bootstrap=True, 
                  random_state=None, verbose=0, warm_start=False, 
-                 class_weight=None, n_cores=1, n_nodes=1, 
+                 class_weight=None, 
+                 partition=None, n_cores=1, n_nodes=1, 
                  node_features=1, memory=2000, time='1:00:00', parallel='local'):
         # MissForest parameters
         self.max_iter = max_iter
         self.init_imp = init_imp
-        # RandomForest parameters
+
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -34,8 +35,9 @@ class MissForest:
         self.verbose = verbose
         self.warm_start = warm_start
         self.class_weight = class_weight
+        
+        self.partition = partition
         self.n_cores = n_cores
-        # Slurm parameters
         self.n_nodes = n_nodes 
         self.node_features = node_features
         self.memory = memory
@@ -72,6 +74,7 @@ class MissForest:
 
     def get_slurm_params(self):
         return {
+            'partition' : self.partition,
             'n_nodes' : self.n_nodes,
             'n_cores' : self.n_cores,
             'node_features' : self.node_features,

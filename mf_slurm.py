@@ -1,5 +1,5 @@
 from randomforest import RandomForest
-from rfimpute import MissForestImputation
+from impute import MissForestImputation
 from job_handler import JobHandler
 import subprocess 
 import pickle
@@ -23,7 +23,7 @@ class MissForestImputationSlurmResultObject:
 
 class MissForestImputationSlurm(MissForestImputation):
 
-    def __init__(self, mf_params, rf_params, n_nodes, n_cores, node_features, memory, time):
+    def __init__(self, mf_params, rf_params, partition, n_nodes, n_cores, node_features, memory, time):
         super().__init__(**mf_params)
         self.class_weight = rf_params.pop('class_weight')
         self.params = rf_params
@@ -31,7 +31,7 @@ class MissForestImputationSlurm(MissForestImputation):
         self.n_nodes = n_nodes
         self.node_features = node_features
 
-        self.handler = JobHandler(n_cores, memory, time)
+        self.handler = JobHandler(partition, n_cores, memory, time)
 
     def miss_forest_imputation(self, matrix_for_impute):
         self.matrix_for_impute = matrix_for_impute
@@ -41,20 +41,7 @@ class MissForestImputationSlurm(MissForestImputation):
         self.previous_iter_matrix = np.copy(self.initial_guess_matrix)
         self.cur_iter_matrix = np.copy(self.initial_guess_matrix)
         cur_iter = 1
-        
-        # for i in range(len(vari_node)):
-        #     for j in range(len(vari_node[i])):
-        #         cur_vari = vari_node[i][j]
-        #         cur_obsi = []
-        #         cur_misi = []
-        #         for k in range(len(vari_node[i][j])):
-        #             cur_obsi.append(self.obsi[cur_vari[k]])
-        #             cur_misi.append(self.misi[cur_vari[k]])
-        #         argument_path = self.handler.get_arguments_varidx_file(i, j)
-        #         with open(argument_path, 'wb') as tmp:
-        #             argument_object = MissForestImputationSlurmArgumentObject(rf, cur_vari, cur_obsi, cur_misi)
-        #             pickle.dump(argument_object, tmp)
-        
+                
         while True:
             if cur_iter > self.max_iter:
                 self.result_matrix = self.previous_iter_matrix

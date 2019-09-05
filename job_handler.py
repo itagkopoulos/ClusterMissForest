@@ -1,6 +1,6 @@
 class JobHandler:
 
-    def __init__(self, n_cores, memory, time):
+    def __init__(self, partition, n_cores, memory, time):
         self.par_quiet = '--quiet'
         self.par_partition = '-p'
         self.par_num_node = '-N'
@@ -18,7 +18,7 @@ class JobHandler:
         self.shell_script_path = '.dat/job.sh'
         self.tmp_X_file = '.dat/tmp_X.dat'
 
-        self.partition = 'production'
+        self.partition = partition 
         self.num_core_each_node = n_cores
         self.memory = memory
         self.time = time 
@@ -34,6 +34,8 @@ class JobHandler:
     def get_command(self, node_id, job_id, iter_id):
         exe_path = 'sbatch'
         par_quiet = self.par_quiet
+        par_partition = self.par_partition
+        partition = self.partition 
         par_num_node = self.par_num_node
         num_node = self.num_node
         par_num_core_each_node = self.par_num_core_each_node
@@ -51,7 +53,7 @@ class JobHandler:
         shell_script_path = self.shell_script_path
 
         return ([exe_path, par_quiet, 
-                self.par_partition, self.partition, 
+                par_partition, partition, 
                 par_num_node, num_node,
                 par_num_core_each_node, num_core_each_node, 
                 par_memory, memory, par_time_limit, time_limit,
