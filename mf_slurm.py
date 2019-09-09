@@ -7,6 +7,17 @@ import time
 import numpy as np
 
 class MissForestImputationSlurmArgumentObject:
+    """private class, contains parameters needed by jobs
+
+    parameters
+    ----------
+    rf_job  : object contains random forest model
+    vart    : list of variable types
+    vari    : list of variable indices in order of ascending number of 
+              missing values
+    obsi    : list of lists of indices of observed values for each variable
+    misi    : list of lists of ondices of missing values for each variable
+    results : object stores the result of finished job on cluster"""
     def __init__(self, rf_obj, vart, vari, obsi, misi):
         self.rf_obj = rf_obj
         self.vart = vart
@@ -16,32 +27,38 @@ class MissForestImputationSlurmArgumentObject:
         self.results = MissForestImputationSlurmResultObject()
         
 class MissForestImputationSlurmResultObject:
+    """private class, stores the result of finished job on cluster
+
+    parameters
+    ----------
+    imp_list : list records the batch of variables sent to the node
+    done     : boolean indicates the job has been done
+    err      : error information if job failed
+    time     : duration of a job"""
     def __init__(self):
         self.imp_list = []
-        self.done = True 
+        self.done = False 
         self.err = None 
+        self.time = None 
 
 class MissForestImputationSlurm(MissForestImputation):
 
     def __init__(self, mf_params, rf_params, partition, n_nodes, n_cores, node_features, memory, time):
         super().__init__(**mf_params)
-        self.class_weight = rf_params.pop('class_weight')
         self.params = rf_params
-
         self.n_nodes = n_nodes
         self.node_features = node_features
-
         self.handler = JobHandler(partition, n_cores, memory, time)
 
     def miss_forest_imputation(self, matrix_for_impute):
         self.matrix_for_impute = matrix_for_impute
-        self.initial_guess()
+        self.raw_fill()
 
         vari_node = self.split_var()
         self.previous_iter_matrix = np.copy(self.initial_guess_matrix)
         self.cur_iter_matrix = np.copy(self.initial_guess_matrix)
         cur_iter = 1
-                
+        
         while True:
             if cur_iter > self.max_iter:
                 self.result_matrix = self.previous_iter_matrix
@@ -56,24 +73,25 @@ class MissForestImputationSlurm(MissForestImputation):
                 for j in range(len(vari_node[i])):
                     #Prepare the jobs
                     cur_vari = vari_node[i][j]
+                    cur_vart = []
                     cur_obsi = []
                     cur_misi = []
                     for k in range(len(vari_node[i][j])):
+                        cur_vart.append(self.vart[cur_vari[k]])
                         cur_obsi.append(self.obsi[cur_vari[k]])
                         cur_misi.append(self.misi[cur_vari[k]])
 
                     argument_path = self.handler.get_arguments_varidx_file(i, j)
                     result_path = self.handler.get_results_varidx_file(i, j)
-                    rf = RandomForest(self.params, self.class_weight)
+                    rf = RandomForest(self.params)
                     with open(argument_path, 'wb') as tmp:
-                        argument_object = MissForestImputationSlurmArgumentObject(rf, self.vart, cur_vari, cur_obsi, cur_misi)
+                        argument_object = MissForestImputationSlurmArgumentObject(rf, cur_vart, cur_vari, cur_obsi, cur_misi)
                         pickle.dump(argument_object, tmp)
                     with open(result_path, 'wb') as tmp:
-                        argument_object.results.done = False
+                        # argument_object.results.done = False
                         pickle.dump(argument_object.results, tmp)
                     
-                    #Submit the jobs
-                    #Write the bash
+                    # write job.sh and submit
                     command_shell = self.handler.get_command_shell(x_path, argument_path, result_path)
                     command_shell =' '.join(command_shell)
                     with open(self.handler.shell_script_path, 'w') as tmp:

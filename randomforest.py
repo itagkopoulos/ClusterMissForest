@@ -1,47 +1,35 @@
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 class RandomForest:
+    """integrated class for RandomForestRegressor and RandomForestClassifier"""
+    def __init__(self, params):
+        # initialize two random forest models and job parameters
+        self._unpack(params)
+        self.reg = RandomForestRegressor(criterion='mse', **self.params)
+        self.clf = RandomForestClassifier(criterion='gini', **self.params, class_weight=self.cw)
+        self.done = False
+        self.err = None
 
-    # def __init__(self, n_estimators, criterion, max_depth,
-    #      min_samples_split, min_samples_leaf,
-    #      min_weight_fraction_leaf, max_features,
-    #      max_leaf_nodes, min_impurity_decrease, bootstrap,
-    #      oob_score, n_jobs, random_state, verbose,
-    #      warm_start, class_weight):
-    #     self.n_estimators = n_estimators
-    #     self.criterion = criterion
-    #     self.max_depth = max_depth
-    #     self.min_samples_split = min_samples_split
-    #     self.min_samples_leaf = min_samples_leaf
-    #     self.min_weight_fraction_leaf = min_weight_fraction_leaf
-    #     self.max_features = max_features 
-    #     self.max_leaf_nodes = max_leaf_nodes 
-    #     self.min_impurity_decrease = min_impurity_decrease
-    #     self.bootstrap = bootstrap
-    #     self.oob_score = oob_score 
-    #     self.n_jobs = n_jobs
-    #     self.random_state = random_state
-    #     self.verbose = verbose
-    #     self.warm_start = warm_start
-    #     self.err = None
-    #     self.done = False
-    def __init__(self, params, cw):
-        """ integrated random forest model """
-        self.reg = RandomForestRegressor(criterion='mse', **params)
-        self.clf = RandomForestClassifier(criterion='gini', **params, class_weight=cw)
-        
-    def fit_predict(self, X_train, y, X_test, vt):
-        imp = None
+    def _unpack(self, params):
+        # Unpack params to set parameters for both random forests
+        params = dict(params)
+        self.cw = params.pop('class_weight')
+        self.params = params
+
+    def fit_predict(self, X_train, y_train, X, vt):
+        # dynamically decide model and returns prediction
+        reg = None
+        clf = None
+        y = None
         try:
-            rf = None
-            if vt == 1:
-                rf = self.reg 
-            else:
-                rf = self.clf 
-            rf.fit(X_train, y)
-            imp = rf.predict(X_test)
+            reg = self.reg 
+            clf = self.clf 
+            rf = reg if vt == 1 else clf 
+            rf.fit(X_train, y_train)
+            y = rf.predict(X)
             self.done = True
         except Exception as e:
+            print(e)
             self.err = e
 
-        return imp
+        return y

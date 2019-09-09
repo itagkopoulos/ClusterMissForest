@@ -3,21 +3,21 @@ from mf_slurm import MissForestImputationSlurm
 from time import time
 import os, shutil
 import numpy as np
+import warnings
 
-InitImpOptions = ['mean', 'zero', 'knn']
+InitImpOptions = ['mean', 'zero']
 ParallelOptions = ['slurm', 'local']
 
 class MissForest:
 
-    def __init__(self, max_iter=10, init_imp='mean',
-                 n_estimators=100, max_depth=None, min_samples_split=2, 
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.0, 
-                 max_features='sqrt', max_leaf_nodes=None, 
-                 min_impurity_decrease=0.0, bootstrap=True, 
-                 random_state=None, verbose=0, warm_start=False, 
-                 class_weight=None, 
-                 partition=None, n_cores=1, n_nodes=1, 
-                 node_features=1, memory=2000, time='1:00:00', parallel='local'):
+    def __init__(self, max_iter=10, init_imp='mean', n_estimators=100, 
+                 max_depth=None, min_samples_split=2, min_samples_leaf=1, 
+                 min_weight_fraction_leaf=0.0, max_features='sqrt', 
+                 max_leaf_nodes=None, min_impurity_decrease=0.0, 
+                 bootstrap=True, random_state=None, verbose=0, 
+                 warm_start=False, class_weight=None, partition=None, 
+                 n_cores=1, n_nodes=1, node_features=1, memory=2000, 
+                 time='1:00:00', parallel='local'):
         # MissForest parameters
         self.max_iter = max_iter
         self.init_imp = init_imp
@@ -51,6 +51,8 @@ class MissForest:
             'max_iter' : self.max_iter,
             'init_imp' : self.init_imp,
             'vart' : self.vart,
+            'numi' : self.numi,
+            'cati' : self.cati,
         }
 
     def get_rf_params(self):
@@ -86,35 +88,39 @@ class MissForest:
     def _check_inputs(self, xmis):
         """ private method, validating all inputs """
         self.vart = []
+        self.numi = []
+        self.cati = []
 
         try:
             n, p = np.shape(xmis)
             for v in range(p):
                 if np.issubdtype(xmis[:, v].dtype, np.number):
                     self.vart.append(1) # numerical
+                    self.numi.append(v)
                 else:
                     self.vart.append(0) # categorical
+                    self.cati.append(v)
         except:
             raise ValueError("xmis: not a matrix")
 
-
-    #     if self.parallel not in ParallelOptions:
-    #         raise ValueError("parallel: not one of slurm, local")
-    #     if self.parallel == 'slurm':
-    #         if type(self.n_nodes) != int or self.n_nodes < 1:
-    #             raise ValueError("n_nodes: not a positive integer")
-    #         elif self.n_nodes > p:
-    #             raise ValueError("n_nodes: nodes should be less than variables of dataset")
-    #         if type(self.node_features) != int or self.node_features < 1:
-    #             raise ValueError("node_features: not a positive integer")
-    #         if type(self.memory) != int or self.memory < 1:
-    #             raise ValueError("memory: not a positive integer")
-    #     if type(self.max_iter) != int or self.max_iter < 1:
-    #         raise ValueError("max_iter: not a positive integer")
-    #     if self.init_imp not in InitImpOptions:
-    #         raise ValueError("init_imp: not one of mean, zero, knn")
-    #     if type(self.n_cores) != int or self.n_cores < 1:
-    #         raise ValueError("n_cores: not a positve integer")
+        if type(self.max_iter) != int or self.max_iter < 1:
+            raise ValueError("max_iter: not a positive integer")
+        if self.init_imp not in InitImpOptions:
+            raise ValueError("init_imp: not one of mean, zero, knn")
+        if type(self.n_cores) != int or self.n_cores < 1:
+            raise ValueError("n_cores: not a positve integer")
+        
+        if self.parallel not in ParallelOptions:
+            raise ValueError("parallel: not one of slurm, local")
+        if self.parallel == 'slurm':
+            if type(self.n_nodes) != int or self.n_nodes < 1:
+                raise ValueError("n_nodes: not a positive integer")
+            if self.n_nodes > p:
+                raise ValueError("n_nodes: nodes should be less than variables of dataset")
+            if type(self.node_features) != int or self.node_features < 1:
+                raise ValueError("node_features: not a positive integer")
+            if int(p / self.node_features) < self.n_nodes:
+                warnings.warn("too large node_features may cause some nodes inactive", SyntaxWarning)
 
     def _init_dirs(self):
         """ private method, initialize hidden files """
@@ -138,32 +144,3 @@ class MissForest:
         mf.miss_forest_imputation(xmis)
 
         return mf.result_matrix
-
-def rmse(nmis, ximp, xtrue):
-    rss = np.sum((xtrue - ximp) ** 2)
-    rmse = np.sqrt(rss / nmis)
-
-    return rmse
-
-if __name__ == "__main__":
-
-    print("reading data files ...")
-    # data = np.loadtxt('data/data0.5_50.csv', delimiter = ',')
-    # true_data = np.loadtxt('data/data0.5.csv', delimiter = ',')
-    data = np.loadtxt('data/big_data50.csv', delimiter=',')
-    true_data = np.loadtxt('data/big_data.txt', skiprows=1, usecols=tuple(np.arange(2, 4098)))
-    nmis = len(np.argwhere(np.isnan(data)))
-    n, p = np.shape(data)
-    mf = MissForest(max_iter=5, init_imp='mean', parallel='slurm', n_nodes=4, n_cores=32, node_features=1024, memory=64000, time='1-00:00')
-    start = time()
-    ximp = mf.fit_transform(data) 
-    duration = time() - start
-
-    print(rmse(nmis, ximp, true_data))
-
-
-
-
-
-
-

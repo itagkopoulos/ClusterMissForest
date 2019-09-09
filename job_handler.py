@@ -1,64 +1,57 @@
 class JobHandler:
-
+    """private object, deal with tasks on slurm"""
     def __init__(self, partition, n_cores, memory, time):
-        self.par_quiet = '--quiet'
-        self.par_partition = '-p'
-        self.par_num_node = '-N'
-        self.num_node = '1'
-        self.par_num_core_each_node = '-c' 
-        self.par_memory = '--mem'
-        self.par_time_limit = '--time'
-        self.par_job_name = '-J'
-        self.job_name = 'impute'
-        self.par_output = '-o'
-        self.output_ext = '.out'
-        self.par_error = '-e'
-        self.error_ext = '.err'
-        self.script_path = 'job.py'
-        self.shell_script_path = '.dat/job.sh'
-        self.tmp_X_file = '.dat/tmp_X.dat'
 
         self.partition = partition 
         self.num_core_each_node = n_cores
         self.memory = memory
         self.time = time 
+        self.tmp_X_file = '.dat/tmp_X.dat'
+        self.shell_script_path = '.dat/job.sh'
 
     def get_command_shell(self, x_path, argument_path, result_path):
         python_path = 'python'
-        script_path = self.script_path
-        x_path = x_path
-        argument_path = argument_path
-        result_path = result_path
+        script_path = 'job.py'
         return ([python_path, script_path, x_path, argument_path, result_path])
     
     def get_command(self, node_id, job_id, iter_id):
         exe_path = 'sbatch'
-        par_quiet = self.par_quiet
-        par_partition = self.par_partition
-        partition = self.partition 
-        par_num_node = self.par_num_node
-        num_node = self.num_node
-        par_num_core_each_node = self.par_num_core_each_node
-        num_core_each_node = str(self.num_core_each_node)
-        par_memory = self.par_memory
-        memory = str(self.memory)
-        par_time_limit = self.par_time_limit
-        time_limit = self.time 
-        par_job_name = self.par_job_name
-        job_name = self.job_name  + str(node_id) + '_' + str(job_id) + '_' + str(iter_id)
-        par_output = self.par_output
-        output_file = '.out/' + job_name + self.output_ext
-        par_error = self.par_error
-        error_file = '.err/' + job_name + self.error_ext
+        par_quiet = '--quiet'
+        par_num_node = '-N'
+        num_node = '1'
+        par_num_core_each_node = '-c'
+        par_memory = '--mem'
+        par_time_limit = '--time'
+        par_job_name = '-J'
+        job_name = 'impute'
+        par_output = '-o'
+        output_ext = '.out'
+        par_error = '-e'
+        error_ext = '.err'
         shell_script_path = self.shell_script_path
 
-        return ([exe_path, par_quiet, 
-                par_partition, partition, 
-                par_num_node, num_node,
-                par_num_core_each_node, num_core_each_node, 
-                par_memory, memory, par_time_limit, time_limit,
-                par_job_name, job_name, par_output, output_file, par_error, 
-                error_file, shell_script_path])
+        if self.partition == None:
+            par_partition = ''
+            partition = ''
+        else:
+            par_partition = '-p'
+            partition = self.partition 
+
+        num_core_each_node = str(self.num_core_each_node)
+        memory = str(self.memory)
+        time_limit = self.time 
+        job_name = job_name  + str(node_id) + '_' + str(job_id) + '_' + str(iter_id)
+        output_file = '.out/' + job_name + output_ext
+        error_file = '.err/' + job_name + error_ext
+        shell_script_path = shell_script_path
+
+        command = [exe_path, par_quiet, par_partition, partition, par_num_node,
+                   num_node,par_num_core_each_node, num_core_each_node, 
+                   par_memory, memory, par_time_limit, time_limit,par_job_name,
+                   job_name, par_output, output_file, par_error, error_file, 
+                   shell_script_path]
+
+        return ([cmd for cmd in command if cmd != ''])
 
     def get_arguments_varidx_file(self, node_id, job_id):
         return '.dat/arguments_' + str(node_id) + '_' + str(job_id) + '.dat'
