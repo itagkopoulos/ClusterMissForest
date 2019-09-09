@@ -223,8 +223,7 @@ fit_transform(self, xmis, cat_var=None)：
 
 ## Credits
 
-NOT COMPLETED YET
-ChengEn Tan
+Coming soon
 
 ## Reference
 
