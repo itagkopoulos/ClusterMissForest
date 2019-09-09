@@ -51,7 +51,24 @@ array([[1.   , 2.   , 4.116],
 ```
 
 ## API
+```
+MissForest(self, max_iter=10, init_imp='mean', n_estimators=100, 
+           max_depth=None, min_samples_split=2, min_samples_leaf=1, 
+           min_weight_fraction_leaf=0.0, max_features='sqrt', 
+           max_leaf_nodes=None, min_impurity_decrease=0.0, 
+           bootstrap=True, random_state=None, verbose=0, 
+           warm_start=False, class_weight=None, partition=None, 
+           n_cores=1, n_nodes=1, node_features=1, memory=2000, 
+           time='1:00:00', parallel='local'):
 
+Parameters
+__________
+NOTE: Parameters are consisted by MissForest parameters, RandomForest parameters, and SLURM
+parameters. For RandomForest is implemented in scikit-learn, many parameters description 
+will be directly referred to [2], [3], [4] (who also uses scikit-learn)
+
+
+```
 <!-- ## Contributing -->
 
 ## Credits
@@ -60,4 +77,7 @@ Coming soon
 
 ## Reference
 
-Coming soon
+-[1] Stekhoven, Daniel J., and Peter Bühlmann. "MissForest—non-parametric missing value imputation for mixed-type data." Bioinformatics 28.1 (2011): 112-118.
+-[2] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html#sklearn.ensemble.RandomForestRegressor
+-[3] https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html#sklearn.ensemble.RandomForestClassifier
+-[4] https://github.com/epsilon-machine/missingpy
