@@ -13,8 +13,6 @@ class MissForestImputationSlurmArgumentObject:
     ----------
     rf_job  : object contains random forest model
     vart    : list of variable types
-    vari    : list of variable indices in order of ascending number of 
-              missing values
     obsi    : list of lists of indices of observed values for each variable
     misi    : list of lists of ondices of missing values for each variable
     results : object stores the result of finished job on cluster"""
@@ -42,7 +40,7 @@ class MissForestImputationSlurmResultObject:
         self.time = None 
 
 class MissForestImputationSlurm(MissForestImputation):
-
+    """private class, missforest subclass for SLURM machines"""
     def __init__(self, mf_params, rf_params, partition, n_nodes, n_cores, node_features, memory, time):
         super().__init__(**mf_params)
         self.params = rf_params
@@ -77,7 +75,7 @@ class MissForestImputationSlurm(MissForestImputation):
                     cur_obsi = []
                     cur_misi = []
                     for k in range(len(vari_node[i][j])):
-                        cur_vart.append(self.vart[cur_vari[k]])
+                        cur_vart.append(self.vart_[cur_vari[k]])
                         cur_obsi.append(self.obsi[cur_vari[k]])
                         cur_misi.append(self.misi[cur_vari[k]])
 
@@ -100,11 +98,9 @@ class MissForestImputationSlurm(MissForestImputation):
                     command = self.handler.get_command(i, j, cur_iter)
                     subprocess.call(command)
                 
-                # print('Polling!')
-                #Polling:
                 finish = False
                 finished_ind = [False]*len(vari_node[i])
-                finished_count = 0
+                # finished_count = 0
                 while finish == False:
                     time.sleep(0.1)
                     finish = True
@@ -131,15 +127,14 @@ class MissForestImputationSlurm(MissForestImputation):
                                         self.cur_iter_matrix[cur_misi[k],cur_vari[k]] = cur_result.imp_list[k]
                                     finished_ind[j] = True
 
-                            if finished_ind.count(True) > finished_count:
-                                finished_count = finished_ind.count(True)
-                                print(finished_count, "/", len(finished_ind), "finished!")
+                            # if finished_ind.count(True) > finished_count:
+                            #     finished_count = finished_ind.count(True)
+                            #     print(finished_count, "/", len(finished_ind), "finished!")
                                 
                         except Exception as e:
                             finish = False
                             break
 
-            #raise Exception('!!!')    
             if self.check_converge() == True:
                 self.result_matrix = self.previous_iter_matrix
                 return

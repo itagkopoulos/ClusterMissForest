@@ -3,12 +3,13 @@ from randomforest import RandomForest
 import numpy as np 
 
 class MissForestImputationLocal(MissForestImputation):
-
+    """private class, missforest subclass for local machine"""
     def __init__(self, mf_params, rf_params):
         super().__init__(**mf_params)
         self.params = rf_params
 
     def miss_forest_imputation(self, matrix_for_impute):
+        """impute dataset and return self"""
         self.matrix_for_impute = matrix_for_impute
         self.raw_fill()
 
@@ -23,8 +24,8 @@ class MissForestImputationLocal(MissForestImputation):
             print("Iteration " + str(cur_iter))
 
             for var in self.vari:
-                p = len(self.vart)
-                vt = self.vart[var]
+                p = len(self.vart_)
+                vt = self.vart_[var]
                 cur_X = self.cur_iter_matrix
                 cur_obsi = self.obsi[var]
                 cur_misi = self.misi[var]
