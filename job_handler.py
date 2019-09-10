@@ -1,7 +1,6 @@
 class JobHandler:
-    """private object, deal with tasks on slurm"""
+    """private object, dealing with tasks on slurm"""
     def __init__(self, partition, n_cores, memory, time):
-
         self.partition = partition 
         self.num_core_each_node = n_cores
         self.memory = memory
@@ -10,11 +9,13 @@ class JobHandler:
         self.shell_script_path = '.dat/job.sh'
 
     def get_command_shell(self, x_path, argument_path, result_path):
+        """return the command to run job.sh"""
         python_path = 'python'
         script_path = 'job.py'
         return ([python_path, script_path, x_path, argument_path, result_path])
     
     def get_command(self, node_id, job_id, iter_id):
+        """return the command of sbatch"""
         exe_path = 'sbatch'
         par_quiet = '--quiet'
         par_num_node = '-N'
