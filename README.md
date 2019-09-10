@@ -1,11 +1,12 @@
 # ClusterMissForest
 
-missForest implemented in Python with the support to high-performance computing. 
-A fast approach of parallelizing missing value imputation task on cluster
-computers. In order to fully utilize the advantage provided by HPC, this package approaches the missing value
-imputation task by parallelizing in two different steps. First, the variables of dataset will be splitted and 
-imputed in parallel on different nodes (machines), and, second, within each node, the estimators will be spliited 
-and computed on different cores.
+missForest implemented in Python with the support to high-performance 
+computing. A fast approach of parallelizing missing value imputation task on 
+cluster computers. In order to fully utilize the advantage provided by HPC, 
+this package approaches the missing value imputation task by parallelizing in 
+two different steps. First, the variables of dataset will be splitted and 
+imputed in parallel on different nodes (machines), and, second, within each 
+node, the estimators will be spliited and computed on different cores.
 
 ClusterMissForest is relied on RandomForestRegressor and RandomForestClassifier of scikit-learn, and, therefore, 
 it is currently not available to directly take categorical variables. Instead, please use one-hot encoder to 
