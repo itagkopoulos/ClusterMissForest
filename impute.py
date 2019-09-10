@@ -1,9 +1,6 @@
-# Missing Value Imputation Class
-# Each feature should be separated for parallel design
 from abc import ABC, abstractmethod
 from enum import Enum
 from randomforest import RandomForest
-import abc
 import util
 import numpy as np
 import pickle
@@ -22,13 +19,11 @@ class ParallelOptions(Enum):
     LOCAL   = "local"
 
 class MissForestImputation(ABC):
-    """ Private object, do not directly use it """
-    def __init__(self, max_iter, init_imp, vart, numi, cati):
+    """Private class, MissForest imputation class"""
+    def __init__(self, max_iter, init_imp, vart_):
         self.max_iter = max_iter
         self.init_imp = init_imp
-        self.vart = vart
-        self.numi = numi 
-        self.cati = cati
+        self.vart_ = vart_
         self.vari = None
         self.misi = None
         self.obsi = None
@@ -44,9 +39,9 @@ class MissForestImputation(ABC):
         pass
 
     def check_converge(self):
-        p = len(self.vart)
-        numi = self.numi
-        cati = self.cati
+        p = len(self.vart_)
+        numi = [i for i in range(p) if self.vart_[i] == 1]
+        cati = [i for i in range(p) if self.vart_[i] == 0]
         cur_diff = [None, None]
         # difference of numerical
         if len(numi) > 0:
@@ -62,11 +57,12 @@ class MissForestImputation(ABC):
             num_differ = np.sum(X_old_cat != X_new_cat)
             num_mis = sum([self.misi[i] for i in cati])
             cur_diff[1] = num_differ / num_mis
-
+        # skip if first iteration
         if self.previous_diff is None:
             self.previous_diff = cur_diff
             return False
         else:
+            # neither of numerical or categorical should degenerate
             for i in range(2):
                 if self.previous_diff[i] != None and cur_diff[i] > self.previous_diff[i]:
                     return True
@@ -83,7 +79,7 @@ class MissForestImputation(ABC):
         misi = [] # indices of missing samples for each variable
         obsi = [] # indices of observations for each variable
         for v in range(p):
-            vt = self.vart[v]
+            vt = self.vart_[v]
             col = Ximp[:, v]
             var_misi = np.where(np.isnan(col))[0]
             var_obsi = np.delete(np.arange(n), var_misi)
