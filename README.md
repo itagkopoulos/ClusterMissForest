@@ -9,9 +9,12 @@ two different steps:
 - Split estimators into different cores within each node
 
 ClusterMissForest is relied on RandomForestRegressor and 
-RandomForestClassifier of scikit-learn, and, therefore, it is currently not 
+RandomForestClassifier of Scikit-learn, so it is currently not 
 available to directly take categorical variables. Instead, please use one-hot 
-encoder to transform your dataset. We are working on adding this feature.
+encoder to transform your dataset. You should also input a list of column
+indices of categorical variable while fitting missing value datasets (see
+Methods in API section). In the future, we will replace Random Forest of
+Scikit-learn in order to achieve categorical variable inputs.
 
 ## Installation
 
