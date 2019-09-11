@@ -24,7 +24,7 @@ def isnan(x):
 
 def mode(x):
     """return the mode of a list"""
-	count = defaultdict(int)
-	for item in x:
-		count[item] += 1
-	return max(count, key=count.get)
+    count = defaultdict(int)
+    for item in x:
+        count[item] += 1
+    return max(count, key=count.get)
