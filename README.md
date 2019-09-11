@@ -1,20 +1,13 @@
 # ClusterMissForest
 
-missForest implemented in Python with the support to high-performance 
-computing. A fast approach of parallelizing missing value imputation task on 
-cluster computers. In order to fully utilize the advantage provided by HPC, 
-this package approaches the missing value imputation task by parallelizing in 
-two different steps: 
-- Split variables into different nodes (machines)
-- Split estimators into different cores within each node
+The ClusterMissForest package is a parallel version of the MissForest algorithm, implemented in Python, so it can parallelize in multiple nodes and cores of a high-performance computing environment. A fast approach of parallelizing missing value imputation task on 
+cluster computers. In order to fully utilize the advantage provided by HPC, the package approaches the missing value imputation task by parallelizing the process in two different steps: 
+- Split variables [what is a variable?] into different nodes
+- Split estimators [what is an estimator?] into different cores within each node
 
-ClusterMissForest is relied on RandomForestRegressor and 
-RandomForestClassifier of Scikit-learn, so it is currently not 
-available to directly take categorical variables. Instead, please use one-hot 
-encoder to transform your dataset. You should also input a list of column
-indices of categorical variable while fitting missing value datasets (see
-Methods in API section). In the future, we will replace Random Forest of
-Scikit-learn in order to achieve categorical variable inputs.
+ClusterMissForest is relied on RandomForestRegressor and RandomForestClassifier of Scikit-learn [provide links in all references], so it is currently not available to directly take categorical variables. Instead, please use one-hot encoder to transform your dataset [provide a link to an script that does this, if possible]. You should also input a list of column indices of categorical variable while fitting missing value datasets (see Methods in API section). In the future, we will replace Random Forest of Scikit-learn in order to achieve categorical variable inputs. [this is not true; we might or we might not, so remove]. 
+
+[Here provide a section with input file specifications, with an example. Do the same for output file, and also provide the pseudocode of the algorithm]
 
 ## Installation
 
@@ -72,12 +65,12 @@ MissForest(self, max_iter=10, init_imp='mean', n_estimators=100,
 Parameters
 __________
 NOTE: Parameters are consisted by MissForest parameters, RandomForest 
-parameters, and SLURM parameters. For RandomForest is implemented in 
+parameters, and SLURM parameters. Since RandomForest is implemented in 
 scikit-learn, many parameters description will be directly referred to [2], 
-[3], [4] (who also uses scikit-learn)
+[3], [4] that also use scikit-learn.
 
 max_iter : int, optional (default=10)
-    The maximum number of iterations in case the convergence is not achieved.
+    The maximum number of iterations to achieve convergence. [What happens when it passes this? Warning?]
 
 init_imp : string (default='mean')
     The mode of initial imputation during the preprocessing:
