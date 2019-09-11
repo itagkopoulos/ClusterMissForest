@@ -270,9 +270,9 @@ class MissForest:
 
     def _check_inputs(self, Xmis, cat_var):
         """private method, validating all inputs"""
-        self.vart_ = [1 for _ in range(p)]
         try:
             n, p = np.shape(Xmis)
+            self.vart_ = [1 for _ in range(p)]
         except:
             raise ValueError("Xmis: not a matrix")
 
